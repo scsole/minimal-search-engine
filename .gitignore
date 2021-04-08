@@ -83,3 +83,6 @@ tags
 # Ignore all local history of files
 .history
 .ionide
+
+### Test XML files ###
+wsj.*
