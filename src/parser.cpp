@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
@@ -17,7 +18,7 @@ int main(int argc, char *argv[])
     }
 
     while ((fgets(buf, sizeof(buf), fp)) != NULL)
-        printf(buf);
+        printf("%s", buf);
 
     fclose(fp);
 

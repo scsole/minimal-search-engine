@@ -1,4 +1,4 @@
-CC=gcc
+CC=g++
 CFLAGS=-Wall -g
 
 ODIR=obj
@@ -6,7 +6,7 @@ ODIR=obj
 _OBJ = parser.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
-$(ODIR)/%.o: %.c
+$(ODIR)/%.o: %.cpp
 	mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
