@@ -1,11 +1,39 @@
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
+#include <cctype>
+#include <cstring>
 
-int main(int argc, char *argv[])
+/* Get the next token in the buffer following position */
+char* get_next_token(char* buf, char* pos, char* token)
 {
-    FILE *fp;
-    char buf[1024 * 1024];
+    char* end;  // Pointer to the end of the next token
+
+    while (!isalnum(*pos) && *pos != '<' && *pos != '\n')
+        pos++;
+    
+    end = pos;
+
+    if (*pos == '<') {
+        while (*++end != '>');
+        ++end;
+    } else if (isalnum(*pos)) {
+        while (isalnum(*++end));
+    } else {
+        return NULL;    // end of buffer
+    }
+
+    memcpy(token, pos, end - pos);
+    token[end - pos] = '\0';
+
+    return end;
+}
+
+int main(int argc, char** argv)
+{
+    FILE* fp;                   // XML file to process
+    char buf[1024 * 1024];      // Buffer for processing XML file
+    char token[1024 * 1024];    // The token being processed
+    char* pos;                  // Current position in buffer
 
     if (argc != 2) {
         printf("Usage: %s <infile.xml>", argv[0]);
@@ -17,8 +45,11 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    while ((fgets(buf, sizeof(buf), fp)) != NULL)
-        printf("%s", buf);
+    while ((fgets(buf, sizeof(buf), fp)) != NULL) {
+        pos = buf;
+        while ((pos = get_next_token(buf, pos, token)) != NULL)
+            printf("%s\n", token);
+    }
 
     fclose(fp);
 
