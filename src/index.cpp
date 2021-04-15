@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
+#include <iostream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -11,10 +12,11 @@ char token[1024 * 1024];    // The token being processed
 char* pos;                  // Current position in buffer
 
 typedef struct {
-    std::string docno;  // TREC DOCNO
-    uint32_t tf;        // Document's term frequency
+    uint32_t docid; // Indexed doc id
+    uint32_t tf;    // Document's term frequency
 } postings;
 std::unordered_map<std::string, std::vector<postings>> file_index; // Inverted file index
+std::vector<std::string> docnos; // The TREC DOCNOs
 
 /**
  * Get the next token in the buffer.
@@ -69,19 +71,22 @@ int main(int argc, char** argv)
     {
         while (get_next_token() != NULL)
         {
-            if (token == "<") {
+            if (*token == '<') {
                 if (!strcmp(token, "<DOC>"))
                     docs_indexed++;
-                else if (strcmp(token, "<DOCNO>"))
+                else if (!strcmp(token, "<DOCNO>"))
                     save_docno = true;
 
             } else if (save_docno) {
-                // TODO:Save docno
+                docnos.push_back(token);
+                save_docno = false;
             }
         }
     }
 
     printf("%d docs indexed\n", docs_indexed);
+    for (std::string id : docnos)
+        std::cout << id << '\n';
 
     fclose(fp);
 
