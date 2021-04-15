@@ -8,25 +8,27 @@ char buf[1024 * 1024];      // Buffer for processing XML file
 char token[1024 * 1024];    // The token being processed
 char* pos;                  // Current position in buffer
 
-/* Get the next token in the buffer following position */
+/**
+ * Get the next token in the buffer.
+ * 
+ * @return The character following the new token, else NULL on buffer end
+ */
 char* get_next_token()
 {
-    char* end;  // Pointer to the end of the next token
-
     while (!isalnum(*pos) && *pos != '<' && *pos != '\n')
         pos++;
     
-    end = pos;
+    char* end = pos;    // End of the token being processed
 
-    if (*pos == '<') {
+    if (*pos == '<') {          // XML tag
         while (*++end != '>')
             ;
         ++end;
-    } else if (isalnum(*pos)) {
+    } else if (isalnum(*pos)) { // Body
         while (isalnum(*++end))
             ;
-    } else {
-        return NULL;    // end of buffer
+    } else {                    // End of buffer
+        return NULL;
     }
 
     memcpy(token, pos, end-pos);

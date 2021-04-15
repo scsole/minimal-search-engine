@@ -1,16 +1,16 @@
 CC=g++
-CFLAGS=-Wall -g
+CFLAGS=-Wall -O2
 
 ODIR=obj
 
-_OBJ = parser.o
+_OBJ = index.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: %.cpp
 	mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-parser: $(OBJ)
+index: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
