@@ -34,6 +34,7 @@ int main(int argc, char** argv)
     char buf[1024 * 1024];      // Buffer for processing XML file
     char token[1024 * 1024];    // The token being processed
     char* pos;                  // Current position in buffer
+    uint docs_indexed = 0;
 
     if (argc != 2) {
         printf("Usage: %s <infile.xml>", argv[0]);
@@ -47,9 +48,13 @@ int main(int argc, char** argv)
 
     while ((fgets(buf, sizeof(buf), fp)) != NULL) {
         pos = buf;
-        while ((pos = get_next_token(buf, pos, token)) != NULL)
-            printf("%s\n", token);
+        while ((pos = get_next_token(buf, pos, token)) != NULL) {
+            if (!strcmp(token, "<DOC>"))
+                docs_indexed++;
+        }
     }
+
+    printf("%d docs indexed\n", docs_indexed);
 
     fclose(fp);
 
