@@ -3,8 +3,13 @@
 #include <cctype>
 #include <cstring>
 
+FILE* fp;                   // XML file to process
+char buf[1024 * 1024];      // Buffer for processing XML file
+char token[1024 * 1024];    // The token being processed
+char* pos;                  // Current position in buffer
+
 /* Get the next token in the buffer following position */
-char* get_next_token(char* buf, char* pos, char* token)
+char* get_next_token()
 {
     char* end;  // Pointer to the end of the next token
 
@@ -14,26 +19,24 @@ char* get_next_token(char* buf, char* pos, char* token)
     end = pos;
 
     if (*pos == '<') {
-        while (*++end != '>');
+        while (*++end != '>')
+            ;
         ++end;
     } else if (isalnum(*pos)) {
-        while (isalnum(*++end));
+        while (isalnum(*++end))
+            ;
     } else {
         return NULL;    // end of buffer
     }
 
-    memcpy(token, pos, end - pos);
-    token[end - pos] = '\0';
+    memcpy(token, pos, end-pos);
+    token[end-pos] = '\0';
 
-    return end;
+    return pos = end;
 }
 
 int main(int argc, char** argv)
 {
-    FILE* fp;                   // XML file to process
-    char buf[1024 * 1024];      // Buffer for processing XML file
-    char token[1024 * 1024];    // The token being processed
-    char* pos;                  // Current position in buffer
     uint docs_indexed = 0;
 
     if (argc != 2) {
@@ -48,7 +51,7 @@ int main(int argc, char** argv)
 
     while ((fgets(buf, sizeof(buf), fp)) != NULL) {
         pos = buf;
-        while ((pos = get_next_token(buf, pos, token)) != NULL) {
+        while (get_next_token() != NULL) {
             if (!strcmp(token, "<DOC>"))
                 docs_indexed++;
         }
