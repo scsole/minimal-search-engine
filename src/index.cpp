@@ -25,8 +25,8 @@ char* get_next_token()
             ;
         ++end;
     } else if (isalnum(*pos)) { // Body
-        while (isalnum(*++end))
-            ;
+        while (isalnum(*end) || *end == '-') // Dont split DOCNO
+            ++end;
     } else {                    // End of buffer
         return NULL;
     }
