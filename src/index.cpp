@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -12,10 +13,10 @@ char token[1024 * 1024];    // The token being processed
 char* pos;                  // Current position in buffer
 
 typedef struct {
-    uint32_t docid; // Indexed doc id
-    uint32_t tf;    // Document's term frequency
-} postings;
-std::unordered_map<std::string, std::vector<postings>> file_index; // Inverted file index
+    int32_t docid; // Indexed doc id
+    int32_t tf;    // Document's term frequency
+} posting;
+std::unordered_map<std::string, std::vector<posting>> file_index; // Inverted file index
 std::vector<std::string> docnos; // The TREC DOCNOs
 
 /**
@@ -51,9 +52,9 @@ char* get_next_token()
  */
 int main(int argc, char** argv)
 {
-    FILE* fp;               // XML file to process
-    uint32_t docs_indexed = 0;  // Number of <DOC> tags indexed
-    bool save_docno = false;
+    FILE* fp;                   // XML file to process
+    int docid = -1;             // Index of <DOC> tags
+    bool save_docno = false;    // The next token is the DOCNO
 
     if (argc != 2) {
         printf("Usage: %s <infile.xml>", argv[0]);
@@ -73,20 +74,41 @@ int main(int argc, char** argv)
         {
             if (*token == '<') {
                 if (!strcmp(token, "<DOC>"))
-                    docs_indexed++;
+                    docid++;
                 else if (!strcmp(token, "<DOCNO>"))
                     save_docno = true;
 
             } else if (save_docno) {
                 docnos.push_back(token);
                 save_docno = false;
+
+            } else {
+                std::string lowercase(token);
+                std::transform(lowercase.begin(), lowercase.end(), lowercase.begin(),
+                    [](unsigned char c){ return std::tolower(c); });
+                
+                std::vector<posting>& postings = file_index[lowercase];
+                if (postings.empty() || postings.back().docid != docid)
+                    postings.push_back({docid, 1});
+                else
+                    postings.back().tf++;
+                
             }
         }
     }
 
-    printf("%d docs indexed\n", docs_indexed);
-    for (std::string id : docnos)
-        std::cout << id << '\n';
+    std::cout << docnos.size() << " docs indexed\n";
+
+    for (auto& item : file_index)
+    {
+        std::cout << item.first << ": ";
+        for (auto p : item.second)
+        {
+            std::cout << p.docid << '=' << p.tf << ',';
+        }
+        std::cout << '\n';
+    }
+    
 
     fclose(fp);
 
