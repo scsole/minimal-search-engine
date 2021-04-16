@@ -19,6 +19,7 @@ struct posting_t { // Posting type
 };
 std::unordered_map<std::string, std::vector<posting_t>> file_index; // Inverted file index
 std::vector<std::string> docnos; // The TREC DOCNOs
+std::vector<int32_t> doclens;    // Document lengths
 
 /**
  * Get the next token in the buffer.
@@ -64,6 +65,7 @@ char* get_next_token(bool is_docnum)
 int index_file(FILE* fp)
 {
     int docid = -1;             // Index of <DOCNO> tags
+    int doclen = 0;             // Length of the current document
     bool save_docno = false;    // The next token is the DOCNO
 
     while ((pos = fgets(buf, sizeof(buf), fp)) != NULL)
@@ -75,6 +77,12 @@ int index_file(FILE* fp)
             {
                 if (!strcmp(token, "<DOC>"))
                 {
+                    // Save document at the end of each document
+                    if (docid != -1)
+                        doclens.push_back(doclen);
+                    doclen = 0;
+
+                    // Increment document ID
                     if (++docid % 10000 == 0)
                         std::cout << docid << " documents indexed\n";
                 }
@@ -88,6 +96,7 @@ int index_file(FILE* fp)
             {
                 docnos.push_back(token);
                 save_docno = false;
+                continue;
             }
 
             // Ensure the token is in lowercase
@@ -103,8 +112,14 @@ int index_file(FILE* fp)
                 postings.push_back({docid, 1});
             else
                 postings.back().tf++;
+
+            // Update current document length
+            doclen++;
         }
     }
+
+    // Length of last document
+    doclens.push_back(doclen);
 
     return docid + 1;
 }
@@ -120,11 +135,12 @@ int index_file(FILE* fp)
  */
 void write_index_to_disk()
 {
-    std::ofstream docnos_file ("docnos.bin"); // TREC DOCNOs
+    std::ofstream docnos_file ("docnos.bin");   // TREC DOCNOs
+    std::ofstream doclens_file ("lengths.bin"); // Document lengths
 
-    if (!docnos_file.is_open())
+    if (!docnos_file.is_open() || !doclens_file.is_open())
     {
-        std::cout << "Unable to open docnos.bin for writing\n";
+        std::cerr << "Unable to open files for writing\n";
         exit(EXIT_FAILURE);
     }
 
@@ -133,10 +149,24 @@ void write_index_to_disk()
     {
         docnos_file << docno << '\n';
     }
+
+    // Write document lengths to disk
+    for (auto &doclen : doclens)
+    {
+        doclens_file << doclen << '\n';
+    }
+
     docnos_file.close();
+    doclens_file.close();
 
     FILE* dictionary_fp = fopen("dictionary.bin", "wb"); // Word list
     FILE* postings_fp = fopen("postings.bin", "wb");     // Postings list
+
+    if (dictionary_fp == NULL || postings_fp == NULL)
+    {
+        std::cerr << "Unable to open files for writing\n";
+        exit(EXIT_FAILURE);
+    }
 
     // Write index to disk: split into word dictionary and posting lists
     for (auto &item : file_index)
@@ -196,6 +226,7 @@ int main(int argc, char** argv)
     fclose(fp);
 
     // Write index to disk
+    std::cout << "Writing index to disk\n";
     write_index_to_disk();
 
     exit(EXIT_SUCCESS);

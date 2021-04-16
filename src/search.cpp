@@ -83,14 +83,34 @@ void load_docnos(std::vector<std::string>& docnos)
     if (infile.is_open())
     {
         while (infile.getline(buf, sizeof(buf)))
-        {
             docnos.push_back(std::string(buf));
-        }
         infile.close();
     }
     else
     {
         std::cerr << _prog << ": unable to open docnos.bin\n";
+        exit(1);
+    }
+}
+
+/**
+ * Load document lengths from disk into memory.
+ */
+void load_doclens(std::vector<int32_t>& doclens)
+{
+    std::ifstream infile;   // Input file
+    int32_t buf;         // Input buffer
+
+    infile.open("lengths.bin");
+    if (infile.is_open())
+    {
+        while (infile >> buf)
+            doclens.push_back(buf);
+        infile.close();
+    }
+    else
+    {
+        std::cerr << _prog << ": unable to open lengths.bin\n";
         exit(1);
     }
 }
@@ -141,6 +161,8 @@ int rsvcomp(const void * a, const void * b)
 
 /**
  * Minimal search engine.
+ * 
+ * Document ranking by normalized term frequencies.
  */
 int main(int argc, char** argv)
 {
@@ -149,14 +171,15 @@ int main(int argc, char** argv)
     // Binary dictionary data
     binary_data_t bdict;
     std::vector<std::string> docnos; // TREC DOCNOs
+    std::vector<int32_t> doclens;    // Document lengths
 
     // Load index from disk
     load_docnos(docnos);
+    load_doclens(doclens);
     load_binary("dictionary.bin", bdict);
     FILE* postings_fp = fopen("postings.bin", "rb");
 
     // Build the in-memory dictionary
-
     std::unordered_map<std::string, posting_location> dictionary;
     build_dictionary(dictionary, bdict);
 
