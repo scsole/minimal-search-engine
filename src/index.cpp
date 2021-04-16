@@ -96,20 +96,62 @@ int index_file(FILE* fp) {
 
 /**
  * Write the in-memory index to disk.
+ * 
+ * index stored as:
+ * | word_length (4) | word (variable) | position (4) | size (4) |
+ * 
+ * postings stored as:
+ * | doc_id (4) | tf (4) |
  */
 void write_index_to_disk() {
-    std::ofstream docnos_file ("docnos.bin");
+    std::ofstream docnos_file ("docnos.bin"); // TREC DOCNOs
 
     if (!docnos_file.is_open()) {
-        std::cout << "Can't write to disk\n";
+        std::cout << "Unable to open docnos.bin for writing\n";
         exit(EXIT_FAILURE);
     }
 
+    // Write DOCNOs to disk
     for (auto &docno : docnos) {
         docnos_file << docno << '\n';
     }
-
     docnos_file.close();
+
+    FILE* dictionary_fp = fopen("dictionary.bin", "wb"); // Word list
+    FILE* postings_fp = fopen("postings.bin", "wb");     // Postings list
+    // std::ofstream index_file ("index.bin",
+    //     std::ios::out|std::ios::binary);        // Index
+    // std::ofstream postings_file ("postings.bin",
+    //     std::ios::out|std::ios::binary);        // Postings list
+
+    int32_t word_length;    // The length of the current token
+    int32_t position;       // The current write position inside postings.bin
+    int32_t size;           // The size of the current postings list
+
+    // Write index to disk: split into word dictionary and posting lists
+    for (auto &item : file_index) {
+        word_length = item.first.size();
+        // position = postings_file.tellp();
+        position = ftell(postings_fp);
+        size = sizeof(item.second[0]) * item.second.size();
+
+        // postings_file.write(reinterpret_cast<char*>(&item.second[0]), size);
+        fwrite(&item.second[0], 1, size, postings_fp);
+
+        // index_file.write(reinterpret_cast<char*>(&word_length), sizeof(word_length));
+        // index_file.write(item.first.c_str(), word_length + 1); // +1 for '\0'
+        // index_file.write(reinterpret_cast<char*>(&position), sizeof(size));
+        // index_file.write(reinterpret_cast<char*>(&size), sizeof(size));
+        fwrite(&word_length, sizeof(word_length), 1, dictionary_fp);
+        fwrite(item.first.c_str(), 1, word_length+1, dictionary_fp);
+        fwrite(&position, sizeof(position), 1, dictionary_fp);
+        fwrite(&size, sizeof(size), 1, dictionary_fp);
+    }
+
+    fclose(dictionary_fp);
+    fclose(postings_fp);
+    // index_file.close();
+    // postings_file.close();
 }
 
 /**

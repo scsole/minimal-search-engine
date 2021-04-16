@@ -1,16 +1,53 @@
+#include <cstdio>
+#include <cstdlib>
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 char* _prog; // Program name
 
+struct binary_data_t {  // Binary data type
+    size_t size;        // Size of the binary block
+    char* block;        // Binary data
+};
+
 std::vector<std::string> docnos; // TREC DOCNOs
 
+struct posting_location { // Postings location type
+    int32_t position;     // Position of entry in postings.bin
+    int32_t size;         // Size of posting list
+};
+
 /**
- * Load index from disk into memory.
+ * Load a binary file into memory.
+ * 
+ * Return the binary file if opened correctly.
  */
-void load_index() {
+binary_data_t* load_binary(const char* infile, binary_data_t& data) {
+    FILE* fp = fopen(infile, "rb");
+
+    if (fp == NULL) {
+        std::cerr << _prog << ": unable to open " << infile << '\n';
+        exit(1);
+    }
+
+    fseek(fp, 0, SEEK_END);
+    data.size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    data.block = (char*) malloc(data.size);
+    fread(data.block, 1, data.size, fp);
+
+    fclose(fp);
+    return &data;
+}
+
+/**
+ * Load DOCNOs from disk into memory.
+ */
+void load_docnos() {
     std::ifstream infile;   // Input file
     char buf[1024];         // Input buffer
 
@@ -29,9 +66,33 @@ void load_index() {
 int main(int argc, char** argv) {
     _prog = argv[0];
 
-    load_index();
+    // Binary dictionary data
+    binary_data_t bdict;
+
+    // Load index from disk
+    load_docnos();
+    load_binary("dictionary.bin", bdict);
+
+    // Build the in-memory dictionary
+    std::unordered_map<std::string, posting_location> dictionary;
+    char* dict_pos = bdict.block;
+    while (dict_pos < bdict.block + bdict.size) {
+        int32_t word_length = *dict_pos;
+        int32_t pos = *((int32_t*) (dict_pos + word_length + 1 + sizeof(uint32_t)));
+        int32_t size = *((int32_t*) (dict_pos + word_length + 1 + 2*sizeof(uint32_t)));
+
+        dictionary[std::string(dict_pos + sizeof(uint32_t))] = {pos, size};
+
+        dict_pos += word_length + 1 + 3*sizeof(uint32_t);
+    }
 
     std::cout << docnos.size() << '\n';
+    std::cout << dictionary.size() << '\n';
 
+    for (auto& item : dictionary) {
+        std::cout << item.first << ' ' << item.second.position << '\n';
+    }
+
+    free(bdict.block);
     return 0;
 }
