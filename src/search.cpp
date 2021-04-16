@@ -16,8 +16,6 @@ struct binary_data_t {  // Binary data type
     char* block;        // Binary data
 };
 
-std::vector<std::string> docnos; // TREC DOCNOs
-
 struct posting_location { // Postings location type
     int32_t position;     // Position of entry in postings.bin
     int32_t size;         // Size of posting list
@@ -76,7 +74,7 @@ void build_dictionary(std::unordered_map<std::string, posting_location>& dict,
 /**
  * Load DOCNOs from disk into memory.
  */
-void load_docnos()
+void load_docnos(std::vector<std::string>& docnos)
 {
     std::ifstream infile;   // Input file
     char buf[1024];         // Input buffer
@@ -107,12 +105,8 @@ void load_docnos()
  */
 char* get_next_term(char* term, char* pos, char* buffer)
 {
-    // End of buffer
-    if (*pos == '\0')
-        return NULL;
-    
     // Skip non alphanumeric characters
-    while (!isalnum(*pos) && *pos != '\n')
+    while (!isalnum(*pos) && *pos != '\n' && *pos != '\0')
         pos++;
 
     char* end = pos;
@@ -123,9 +117,7 @@ char* get_next_term(char* term, char* pos, char* buffer)
             end++;
     }
     else
-    {
         return NULL;
-    }
 
     // Return the search term in lowercase
     int i = 0;
@@ -156,13 +148,15 @@ int main(int argc, char** argv)
 
     // Binary dictionary data
     binary_data_t bdict;
+    std::vector<std::string> docnos; // TREC DOCNOs
 
     // Load index from disk
-    load_docnos();
+    load_docnos(docnos);
     load_binary("dictionary.bin", bdict);
     FILE* postings_fp = fopen("postings.bin", "rb");
 
     // Build the in-memory dictionary
+
     std::unordered_map<std::string, posting_location> dictionary;
     build_dictionary(dictionary, bdict);
 
@@ -202,8 +196,10 @@ int main(int argc, char** argv)
             }
         }
 
-        // Sort the results
+        // Sort results
         std::sort(std::begin(rsv_pointers), std::end(rsv_pointers), rsvcomp);
+
+        // Print all relevant postings
         for (size_t i = 0; i < docnos.size(); i++)
         {
             if (*rsv_pointers[i] == 0)
