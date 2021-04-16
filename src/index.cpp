@@ -13,11 +13,11 @@ char buf[1024 * 1024];      // Buffer for processing XML file
 char token[1024 * 1024];    // The token being processed
 char* pos;                  // Current position in buffer
 
-typedef struct {
+struct posting_t {   // Posting type
     int32_t docid; // Indexed doc id
     int32_t tf;    // Document's term frequency
-} posting;
-std::unordered_map<std::string, std::vector<posting>> file_index; // Inverted file index
+};
+std::unordered_map<std::string, std::vector<posting_t>> file_index; // Inverted file index
 std::vector<std::string> docnos; // The TREC DOCNOs
 
 /**
@@ -83,7 +83,7 @@ int index_file(FILE* fp) {
                 [](unsigned char c){ return std::tolower(c); });
 
             // Update the term frequency inside the in-memory index
-            std::vector<posting>& postings = file_index[lowercase];
+            std::vector<posting_t>& postings = file_index[lowercase];
             if (postings.empty() || postings.back().docid != docid)
                 postings.push_back({docid, 1});
             else
