@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-Wall -O2
+CFLAGS=-std=c++11 -Wall -O2
 
 ODIR=obj
 
@@ -21,5 +21,10 @@ index: $(OBJ_INDEX)
 search: $(OBJ_SEARCH)
 	$(CC) -o $@ $^ $(CFLAGS)
 
+clean-all: clean clean-index
+
 clean:
 	rm -f $(ODIR)/*.o *~
+
+clean-index:
+	rm -f *.bin
