@@ -4,6 +4,7 @@
 #include <cstring>
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -29,7 +30,7 @@ char* get_next_token()
     while (!isalnum(*pos) && *pos != '<' && *pos != '\n')
         pos++;
     
-    char* end = pos;    // End of the token being processed
+    char* end = pos; // End of the token being processed
 
     if (*pos == '<') {          // XML tag
         while (*++end != '>')
@@ -97,7 +98,18 @@ int index_file(FILE* fp) {
  * Write the in-memory index to disk.
  */
 void write_index_to_disk() {
+    std::ofstream docnos_file ("docnos.bin");
 
+    if (!docnos_file.is_open()) {
+        std::cout << "Can't write to disk\n";
+        exit(EXIT_FAILURE);
+    }
+
+    for (auto &docno : docnos) {
+        docnos_file << docno << '\n';
+    }
+
+    docnos_file.close();
 }
 
 /**
@@ -130,16 +142,6 @@ int main(int argc, char** argv)
 
     // Write index to disk
     write_index_to_disk();
-
-    for (auto& item : file_index)
-    {
-        std::cout << item.first << ": ";
-        for (auto p : item.second)
-        {
-            std::cout << docnos[p.docid] << '=' << p.tf << ',';
-        }
-        std::cout << '\n';
-    }
 
     exit(EXIT_SUCCESS);
 }
