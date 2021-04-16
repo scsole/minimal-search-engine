@@ -70,7 +70,10 @@ int index_file(FILE* fp)
             if (*token == '<')
             {
                 if (!strcmp(token, "<DOC>"))
-                    docid++;
+                {
+                    if (++docid % 10000 == 0)
+                        std::cout << docid << " documents indexed\n";
+                }
                 else if (!strcmp(token, "<DOCNO>"))
                     save_docno = true;
                 continue;
@@ -185,7 +188,7 @@ int main(int argc, char** argv)
         fclose(fp);
         exit(EXIT_SUCCESS);
     }
-    std::cout << docnos.size() << " documents indexed\n";
+    std::cout << "DONE: " << docnos.size() << " documents indexed\n";
     fclose(fp);
 
     // Write index to disk
