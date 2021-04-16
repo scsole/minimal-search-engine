@@ -222,12 +222,13 @@ int main(int argc, char** argv)
         fclose(fp);
         exit(EXIT_SUCCESS);
     }
-    std::cout << "DONE: " << docnos.size() << " documents indexed\n";
+    std::cout << docnos.size() << " documents indexed\n";
     fclose(fp);
 
     // Write index to disk
     std::cout << "Writing index to disk\n";
     write_index_to_disk();
+    std::cout << "DONE\n";
 
     exit(EXIT_SUCCESS);
 }
