@@ -45,6 +45,25 @@ binary_data_t* load_binary(const char* infile, binary_data_t& data) {
 }
 
 /**
+ * Build a dictionary from an in-memory binary.
+ */
+void build_dictionary(std::unordered_map<std::string, posting_location>& dict,
+                        binary_data_t &bdict) {
+    char* current = bdict.block;
+    while (current < bdict.block + bdict.size) {
+        std::string token(current + sizeof(uint32_t));
+
+        int32_t token_length = *current;
+        int32_t pos = *((int32_t*) (current + token_length + 1 + sizeof(uint32_t)));
+        int32_t size = *((int32_t*) (current + token_length + 1 + 2*sizeof(uint32_t)));
+
+        dict[token] = {pos, size};
+
+        current += token_length + 1 + 3*sizeof(uint32_t);
+    }
+}
+
+/**
  * Load DOCNOs from disk into memory.
  */
 void load_docnos() {
@@ -75,25 +94,7 @@ int main(int argc, char** argv) {
 
     // Build the in-memory dictionary
     std::unordered_map<std::string, posting_location> dictionary;
-    char* current = bdict.block;
-    while (current < bdict.block + bdict.size) {
-        std::string token(current + sizeof(uint32_t));
-
-        int32_t token_length = *current;
-        int32_t pos = *((int32_t*) (current + token_length + 1 + sizeof(uint32_t)));
-        int32_t size = *((int32_t*) (current + token_length + 1 + 2*sizeof(uint32_t)));
-
-        dictionary[token] = {pos, size};
-
-        current += token_length + 1 + 3*sizeof(uint32_t);
-    }
-
-    std::cout << docnos.size() << '\n';
-    std::cout << dictionary.size() << '\n';
-
-    for (auto& item : dictionary) {
-        std::cout << item.first << ' ' << item.second.position << '\n';
-    }
+    build_dictionary(dictionary, bdict);
 
     free(bdict.block);
     return 0;
