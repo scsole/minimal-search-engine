@@ -75,15 +75,17 @@ int main(int argc, char** argv) {
 
     // Build the in-memory dictionary
     std::unordered_map<std::string, posting_location> dictionary;
-    char* dict_pos = bdict.block;
-    while (dict_pos < bdict.block + bdict.size) {
-        int32_t word_length = *dict_pos;
-        int32_t pos = *((int32_t*) (dict_pos + word_length + 1 + sizeof(uint32_t)));
-        int32_t size = *((int32_t*) (dict_pos + word_length + 1 + 2*sizeof(uint32_t)));
+    char* current = bdict.block;
+    while (current < bdict.block + bdict.size) {
+        std::string token(current + sizeof(uint32_t));
 
-        dictionary[std::string(dict_pos + sizeof(uint32_t))] = {pos, size};
+        int32_t token_length = *current;
+        int32_t pos = *((int32_t*) (current + token_length + 1 + sizeof(uint32_t)));
+        int32_t size = *((int32_t*) (current + token_length + 1 + 2*sizeof(uint32_t)));
 
-        dict_pos += word_length + 1 + 3*sizeof(uint32_t);
+        dictionary[token] = {pos, size};
+
+        current += token_length + 1 + 3*sizeof(uint32_t);
     }
 
     std::cout << docnos.size() << '\n';
