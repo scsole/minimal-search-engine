@@ -21,7 +21,8 @@ std::vector<std::string> docnos; // The TREC DOCNOs
 
 /**
  * Get the next token in the buffer.
- * Returns the character following the new token, else NULL on buffer end.
+ * 
+ * Return the character following the new token, else NULL on buffer end.
  */
 char* get_next_token()
 {
@@ -48,26 +49,14 @@ char* get_next_token()
 }
 
 /**
- * Indexer for the TREC WSJ collection.
+ * Build an inverted file index for fp.
+ * 
+ * Return the number of documents indexed.
  */
-int main(int argc, char** argv)
-{
-    FILE* fp;                   // XML file to process
-    int docid = -1;             // Index of <DOC> tags
+int index_file(FILE* fp) {
+    int docid = -1;             // Index of <DOCNO> tags
     bool save_docno = false;    // The next token is the DOCNO
 
-    if (argc != 2) {
-        printf("Usage: %s <infile.xml>", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    // Open file for reading
-    if ((fp = fopen(argv[1], "r")) == NULL) {
-        fprintf(stderr, "%s: can't open %s\n", argv[0], argv[1]);
-        exit(EXIT_FAILURE);
-    }
-
-    // Index document
     while ((pos = fgets(buf, sizeof(buf), fp)) != NULL)
     {
         while (get_next_token() != NULL)
@@ -101,7 +90,46 @@ int main(int argc, char** argv)
         }
     }
 
-    std::cout << docnos.size() << " docs indexed\n";
+    return docid + 1;
+}
+
+/**
+ * Write the in-memory index to disk.
+ */
+void write_index_to_disk() {
+
+}
+
+/**
+ * Indexer for the TREC WSJ collection.
+ */
+int main(int argc, char** argv)
+{
+    FILE* fp; // XML file to process
+
+    // Verify arguments
+    if (argc != 2) {
+        printf("Usage: %s <infile.xml>", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    // Open file for reading
+    if ((fp = fopen(argv[1], "r")) == NULL) {
+        fprintf(stderr, "%s: can't open %s\n", argv[0], argv[1]);
+        exit(EXIT_FAILURE);
+    }
+
+    // Index the file
+    if (index_file(fp) == 0) {
+        std::cout << "No documents indexed!\n";
+        fclose(fp);
+        exit(EXIT_SUCCESS);
+    }
+    std::cout << docnos.size() << " documents indexed\n";
+    fclose(fp);
+
+    // Write index to disk
+    write_index_to_disk();
 
     for (auto& item : file_index)
     {
@@ -112,8 +140,6 @@ int main(int argc, char** argv)
         }
         std::cout << '\n';
     }
-
-    fclose(fp);
 
     exit(EXIT_SUCCESS);
 }
