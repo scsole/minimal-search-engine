@@ -107,6 +107,10 @@ void load_docnos()
  */
 char* get_next_term(char* term, char* pos, char* buffer)
 {
+    // End of buffer
+    if (*pos == '\0')
+        return NULL;
+    
     // Skip non alphanumeric characters
     while (!isalnum(*pos) && *pos != '\n')
         pos++;
@@ -125,7 +129,7 @@ char* get_next_term(char* term, char* pos, char* buffer)
 
     // Return the search term in lowercase
     int i = 0;
-    while (i < end - pos)
+    while (i < end - pos && i < (int) sizeof(buffer) - 1)
     {
         term[i] = pos[i];
         i++;
