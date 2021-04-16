@@ -156,13 +156,13 @@ char* get_next_term(char* term, char* pos, char* buffer)
  */
 int rsvcomp(const void * a, const void * b)
 {
-    return *(int32_t *)a > *(int32_t *)b;
+    return *(double *)a > *(double *)b;
 }
 
 /**
  * Minimal search engine.
  * 
- * Document ranking by normalized term frequencies.
+ * Implements naive document ranking by using term densities.
  */
 int main(int argc, char** argv)
 {
@@ -188,8 +188,8 @@ int main(int argc, char** argv)
     char* pos;              // Positions in buffer
 
     int32_t* postings_buffer = new int32_t[(docnos.size() + 1) * 2]; // Postings buffer for search queries
-    int32_t* rsv             = new int32_t[docnos.size()];           // RSV values for each document
-    std::vector<int32_t *> rsv_pointers(docnos.size());              // RSV pointer vector for sorting
+    double* rsv              = new double[docnos.size()];           // RSV values for each document
+    std::vector<double *> rsv_pointers(docnos.size());              // RSV pointer vector for sorting
 
     for (size_t i = 0; i < docnos.size(); i++)
         rsv_pointers[i] = &rsv[i];
@@ -215,7 +215,7 @@ int main(int argc, char** argv)
 
                 // Accumulate RSV values for each posting
                 for (int32_t hit = 0; hit < hits; hit++, postings++)
-                    rsv[postings->docid] += postings->tf;
+                    rsv[postings->docid] += postings->tf / (double) doclens[postings->docid];
             }
         }
 
