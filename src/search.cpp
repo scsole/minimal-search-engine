@@ -23,6 +23,11 @@ struct posting_location { // Postings location type
     int32_t size;         // Size of posting list
 };
 
+struct posting_t {  // Posting type
+    int32_t docid;  // Indexed doc id
+    int32_t tf;     // Document's term frequency
+};
+
 /**
  * Load a binary file into memory.
  * 
@@ -129,18 +134,44 @@ int main(int argc, char** argv) {
     // Load index from disk
     load_docnos();
     load_binary("dictionary.bin", bdict);
+    FILE* postings_fp = fopen("postings.bin", "rb");
 
     // Build the in-memory dictionary
     std::unordered_map<std::string, posting_location> dictionary;
     build_dictionary(dictionary, bdict);
 
-    // Process search querys
     char buffer[1024];      // Buffer for search terms from stdin
     char term[1024];        // Current filtered search term from buffer
     char* pos;              // Positions in buffer
-    while ((pos = fgets(buffer, sizeof(buffer), stdin)) != NULL) {
+
+    int32_t* postings_buffer = new int32_t[docnos.size() * 2]; // Postings buffer for search queries
+    int32_t* rsv             = new int32_t[docnos.size()];     // RSV values
+
+    // Process search queries line by line
+    while ((pos = fgets(buffer, sizeof(buffer), stdin)) != NULL)
+    { 
+        // Prepare for a new search
+        memset(rsv, 0, sizeof(*rsv * docnos.size()));
+
+        // Process each term in the query
         while ((pos = get_next_term(term, pos, buffer)) != NULL)
-            std::cout << term << '\n';
+        {
+            posting_location term_postings;
+            if ((term_postings = dictionary[std::string(term)]).size != 0)
+            {
+                // Results found: read the revelant postings list from disk
+                fseek(postings_fp, term_postings.position, SEEK_SET);
+                fread(postings_buffer, 1, term_postings.size, postings_fp);
+
+                int32_t hits = term_postings.size / sizeof(int32_t) / 2;
+                posting_t* postings = (posting_t *)(&postings_buffer[0]);
+
+                std::cout << "term:" << term << ',';
+                std::cout << "docid:" << postings->docid << ',';
+                std::cout << "docno:" << docnos[postings->docid] << ',';
+                std::cout << "tf:" << postings->tf << '\n';
+            }
+        }
     }
 
     free(bdict.block);
