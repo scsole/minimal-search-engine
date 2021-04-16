@@ -72,28 +72,32 @@ int main(int argc, char** argv)
     {
         while (get_next_token() != NULL)
         {
+            // Do not index XML tags
             if (*token == '<') {
                 if (!strcmp(token, "<DOC>"))
                     docid++;
                 else if (!strcmp(token, "<DOCNO>"))
                     save_docno = true;
-
-            } else if (save_docno) {
+                continue;
+            }
+            
+            // Save the TREC DOCNO
+            if (save_docno) {
                 docnos.push_back(token);
                 save_docno = false;
-
-            } else {
-                std::string lowercase(token);
-                std::transform(lowercase.begin(), lowercase.end(), lowercase.begin(),
-                    [](unsigned char c){ return std::tolower(c); });
-                
-                std::vector<posting>& postings = file_index[lowercase];
-                if (postings.empty() || postings.back().docid != docid)
-                    postings.push_back({docid, 1});
-                else
-                    postings.back().tf++;
-                
             }
+
+            // Ensure the token is in lowercase
+            std::string lowercase(token);
+            std::transform(lowercase.begin(), lowercase.end(), lowercase.begin(),
+                [](unsigned char c){ return std::tolower(c); });
+
+            // Update the term frequency inside the in-memory index
+            std::vector<posting>& postings = file_index[lowercase];
+            if (postings.empty() || postings.back().docid != docid)
+                postings.push_back({docid, 1});
+            else
+                postings.back().tf++;
         }
     }
 
@@ -104,11 +108,10 @@ int main(int argc, char** argv)
         std::cout << item.first << ": ";
         for (auto p : item.second)
         {
-            std::cout << p.docid << '=' << p.tf << ',';
+            std::cout << docnos[p.docid] << '=' << p.tf << ',';
         }
         std::cout << '\n';
     }
-    
 
     fclose(fp);
 
