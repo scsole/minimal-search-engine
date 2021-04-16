@@ -25,7 +25,7 @@ std::vector<std::string> docnos; // The TREC DOCNOs
  *
  * Return the character following the new token, else NULL on buffer end.
  */
-char* get_next_token()
+char* get_next_token(bool is_docnum)
 {
     while (!isalnum(*pos) && *pos != '<' && *pos != '\n')
         pos++;
@@ -40,8 +40,12 @@ char* get_next_token()
     }
     else if (isalnum(*pos)) // Body
     {
-        while (isalnum(*end) || *end == '-') // Dont split DOCNO
-            ++end;
+        if (is_docnum)
+            while (isalnum(*end) || *end == '-') // Dont split DOCNO
+                ++end;
+        else
+            while (isalnum(*end))
+                ++end;
     }
     else                    // End of buffer
         return NULL;
@@ -64,7 +68,7 @@ int index_file(FILE* fp)
 
     while ((pos = fgets(buf, sizeof(buf), fp)) != NULL)
     {
-        while (get_next_token() != NULL)
+        while (get_next_token(save_docno) != NULL)
         {
             // Do not index XML tags
             if (*token == '<')
