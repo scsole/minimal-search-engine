@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 
 char* _prog; // Program name
 
@@ -123,6 +124,14 @@ char* get_next_term(char* term, char* pos, char* buffer) {
 }
 
 /**
+ * Compare two RSV values.
+ */
+int rsvcomp(const void * a, const void * b)
+{
+    return *(int32_t *)a > *(int32_t *)b;
+}
+
+/**
  * Minimal search engine.
  */
 int main(int argc, char** argv) {
@@ -144,8 +153,12 @@ int main(int argc, char** argv) {
     char term[1024];        // Current filtered search term from buffer
     char* pos;              // Positions in buffer
 
-    int32_t* postings_buffer = new int32_t[docnos.size() * 2]; // Postings buffer for search queries
-    int32_t* rsv             = new int32_t[docnos.size()];     // RSV values for each document
+    int32_t* postings_buffer = new int32_t[(docnos.size() + 1) * 2]; // Postings buffer for search queries
+    int32_t* rsv             = new int32_t[docnos.size()];           // RSV values for each document
+    std::vector<int32_t *> rsv_pointers(docnos.size());              // RSV pointer vector for sorting
+
+    for (size_t i = 0; i < docnos.size(); i++)
+        rsv_pointers[i] = &rsv[i];
 
     // Process search queries line by line
     while ((pos = fgets(buffer, sizeof(buffer), stdin)) != NULL)
@@ -170,6 +183,15 @@ int main(int argc, char** argv) {
                 for (int32_t hit = 0; hit < hits; hit++, postings++)
                     rsv[postings->docid] += postings->tf;
             }
+        }
+
+        // Sort the results
+        std::sort(std::begin(rsv_pointers), std::end(rsv_pointers), rsvcomp);
+        for (size_t i = 0; i < docnos.size(); i++)
+        {
+            if (*rsv_pointers[i] == 0)
+                break;
+            std::cout << docnos[rsv_pointers[i] - rsv] << ' ' << *rsv_pointers[i] << '\n';
         }
     }
 
