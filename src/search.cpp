@@ -1,5 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
+#include <cctype>
+#include <cstring>
 
 #include <iostream>
 #include <fstream>
@@ -82,6 +84,42 @@ void load_docnos() {
     }
 }
 
+/**
+ * Get the next search term in the buffer.
+ * 
+ * A search term is defined as an alphnumeric token.
+ * 
+ * Return the character following the end of the current token, else NULL on
+ * buffer end.
+ */
+char* get_next_term(char* term, char* pos, char* buffer) {
+    // Skip non alphanumeric characters
+    while (!isalnum(*pos) && *pos != '\n')
+        pos++;
+
+    char* end = pos;
+
+    if (isalnum(*pos)) {
+        while (isalnum(*end))
+            end++;
+    } else {
+        return NULL;
+    }
+
+    // Return the search term in lowercase
+    int i = 0;
+    while (i < end - pos) {
+        term[i] = pos[i];
+        i++;
+    }
+    term[i] = '\0';
+
+    return end;
+}
+
+/**
+ * Minimal search engine.
+ */
 int main(int argc, char** argv) {
     _prog = argv[0];
 
@@ -95,6 +133,15 @@ int main(int argc, char** argv) {
     // Build the in-memory dictionary
     std::unordered_map<std::string, posting_location> dictionary;
     build_dictionary(dictionary, bdict);
+
+    // Process search querys
+    char buffer[1024];      // Buffer for search terms from stdin
+    char term[1024];        // Current filtered search term from buffer
+    char* pos;              // Positions in buffer
+    while ((pos = fgets(buffer, sizeof(buffer), stdin)) != NULL) {
+        while ((pos = get_next_term(term, pos, buffer)) != NULL)
+            std::cout << term << '\n';
+    }
 
     free(bdict.block);
     return 0;
