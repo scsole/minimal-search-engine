@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -31,13 +30,15 @@ struct posting_t {  // Posting type
 
 /**
  * Load a binary file into memory.
- * 
+ *
  * Return the binary file if opened correctly.
  */
-binary_data_t* load_binary(const char* infile, binary_data_t& data) {
+binary_data_t* load_binary(const char* infile, binary_data_t& data)
+{
     FILE* fp = fopen(infile, "rb");
 
-    if (fp == NULL) {
+    if (fp == NULL)
+    {
         std::cerr << _prog << ": unable to open " << infile << '\n';
         exit(1);
     }
@@ -56,7 +57,8 @@ binary_data_t* load_binary(const char* infile, binary_data_t& data) {
  * Build a dictionary from an in-memory binary.
  */
 void build_dictionary(std::unordered_map<std::string, posting_location>& dict,
-                        binary_data_t &bdict) {
+                      binary_data_t &bdict)
+{
     char* current = bdict.block;
     while (current < bdict.block + bdict.size) {
         std::string token(current + sizeof(uint32_t));
@@ -74,17 +76,22 @@ void build_dictionary(std::unordered_map<std::string, posting_location>& dict,
 /**
  * Load DOCNOs from disk into memory.
  */
-void load_docnos() {
+void load_docnos()
+{
     std::ifstream infile;   // Input file
     char buf[1024];         // Input buffer
 
     infile.open("docnos.bin");
-    if (infile.is_open()) {
-        while (infile.getline(buf, sizeof(buf))) {
+    if (infile.is_open())
+    {
+        while (infile.getline(buf, sizeof(buf)))
+        {
             docnos.push_back(std::string(buf));
         }
         infile.close();
-    } else {
+    }
+    else
+    {
         std::cerr << _prog << ": unable to open docnos.bin\n";
         exit(1);
     }
@@ -92,29 +99,34 @@ void load_docnos() {
 
 /**
  * Get the next search term in the buffer.
- * 
+ *
  * A search term is defined as an alphnumeric token.
- * 
+ *
  * Return the character following the end of the current token, else NULL on
  * buffer end.
  */
-char* get_next_term(char* term, char* pos, char* buffer) {
+char* get_next_term(char* term, char* pos, char* buffer)
+{
     // Skip non alphanumeric characters
     while (!isalnum(*pos) && *pos != '\n')
         pos++;
 
     char* end = pos;
 
-    if (isalnum(*pos)) {
+    if (isalnum(*pos))
+    {
         while (isalnum(*end))
             end++;
-    } else {
+    }
+    else
+    {
         return NULL;
     }
 
     // Return the search term in lowercase
     int i = 0;
-    while (i < end - pos) {
+    while (i < end - pos)
+    {
         term[i] = pos[i];
         i++;
     }
@@ -134,7 +146,8 @@ int rsvcomp(const void * a, const void * b)
 /**
  * Minimal search engine.
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     _prog = argv[0];
 
     // Binary dictionary data
@@ -162,7 +175,7 @@ int main(int argc, char** argv) {
 
     // Process search queries line by line
     while ((pos = fgets(buffer, sizeof(buffer), stdin)) != NULL)
-    { 
+    {
         // Prepare for a new search
         memset(rsv, 0, sizeof(*rsv) * docnos.size());
 

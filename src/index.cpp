@@ -9,11 +9,11 @@
 #include <vector>
 #include <unordered_map>
 
-char buf[1024 * 1024];      // Buffer for processing XML file
-char token[1024 * 1024];    // The token being processed
-char* pos;                  // Current position in buffer
+char buf[1024 * 1024];   // Buffer for processing XML file
+char token[1024 * 1024]; // The token being processed
+char* pos;               // Current position in buffer
 
-struct posting_t {   // Posting type
+struct posting_t { // Posting type
     int32_t docid; // Indexed doc id
     int32_t tf;    // Document's term frequency
 };
@@ -22,26 +22,29 @@ std::vector<std::string> docnos; // The TREC DOCNOs
 
 /**
  * Get the next token in the buffer.
- * 
+ *
  * Return the character following the new token, else NULL on buffer end.
  */
 char* get_next_token()
 {
     while (!isalnum(*pos) && *pos != '<' && *pos != '\n')
         pos++;
-    
+
     char* end = pos; // End of the token being processed
 
-    if (*pos == '<') {          // XML tag
+    if (*pos == '<')        // XML tag
+    {
         while (*++end != '>')
             ;
         ++end;
-    } else if (isalnum(*pos)) { // Body
+    }
+    else if (isalnum(*pos)) // Body
+    {
         while (isalnum(*end) || *end == '-') // Dont split DOCNO
             ++end;
-    } else {                    // End of buffer
-        return NULL;
     }
+    else                    // End of buffer
+        return NULL;
 
     memcpy(token, pos, end-pos);
     token[end-pos] = '\0';
@@ -51,10 +54,11 @@ char* get_next_token()
 
 /**
  * Build an inverted file index for fp.
- * 
+ *
  * Return the number of documents indexed.
  */
-int index_file(FILE* fp) {
+int index_file(FILE* fp)
+{
     int docid = -1;             // Index of <DOCNO> tags
     bool save_docno = false;    // The next token is the DOCNO
 
@@ -63,16 +67,18 @@ int index_file(FILE* fp) {
         while (get_next_token() != NULL)
         {
             // Do not index XML tags
-            if (*token == '<') {
+            if (*token == '<')
+            {
                 if (!strcmp(token, "<DOC>"))
                     docid++;
                 else if (!strcmp(token, "<DOCNO>"))
                     save_docno = true;
                 continue;
             }
-            
+
             // Save the TREC DOCNO
-            if (save_docno) {
+            if (save_docno)
+            {
                 docnos.push_back(token);
                 save_docno = false;
             }
@@ -80,7 +86,9 @@ int index_file(FILE* fp) {
             // Ensure the token is in lowercase
             std::string lowercase(token);
             std::transform(lowercase.begin(), lowercase.end(), lowercase.begin(),
-                [](unsigned char c){ return std::tolower(c); });
+            [](unsigned char c) {
+                return std::tolower(c);
+            });
 
             // Update the term frequency inside the in-memory index
             std::vector<posting_t>& postings = file_index[lowercase];
@@ -96,23 +104,26 @@ int index_file(FILE* fp) {
 
 /**
  * Write the in-memory index to disk.
- * 
+ *
  * index stored as:
  * | word_length (4) | word (variable) | position (4) | size (4) |
- * 
+ *
  * postings stored as:
  * | doc_id (4) | tf (4) |
  */
-void write_index_to_disk() {
+void write_index_to_disk()
+{
     std::ofstream docnos_file ("docnos.bin"); // TREC DOCNOs
 
-    if (!docnos_file.is_open()) {
+    if (!docnos_file.is_open())
+    {
         std::cout << "Unable to open docnos.bin for writing\n";
         exit(EXIT_FAILURE);
     }
 
     // Write DOCNOs to disk
-    for (auto &docno : docnos) {
+    for (auto &docno : docnos)
+    {
         docnos_file << docno << '\n';
     }
     docnos_file.close();
@@ -121,7 +132,8 @@ void write_index_to_disk() {
     FILE* postings_fp = fopen("postings.bin", "wb");     // Postings list
 
     // Write index to disk: split into word dictionary and posting lists
-    for (auto &item : file_index) {
+    for (auto &item : file_index)
+    {
         // Length of the current token
         int32_t word_length = item.first.size();
 
@@ -153,19 +165,22 @@ int main(int argc, char** argv)
     FILE* fp; // XML file to process
 
     // Verify arguments
-    if (argc != 2) {
+    if (argc != 2)
+    {
         printf("Usage: %s <infile.xml>", argv[0]);
         exit(EXIT_FAILURE);
     }
 
     // Open file for reading
-    if ((fp = fopen(argv[1], "r")) == NULL) {
+    if ((fp = fopen(argv[1], "r")) == NULL)
+    {
         fprintf(stderr, "%s: can't open %s\n", argv[0], argv[1]);
         exit(EXIT_FAILURE);
     }
 
     // Index the file
-    if (index_file(fp) == 0) {
+    if (index_file(fp) == 0)
+    {
         std::cout << "No documents indexed!\n";
         fclose(fp);
         exit(EXIT_SUCCESS);
