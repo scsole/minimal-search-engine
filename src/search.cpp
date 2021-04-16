@@ -145,13 +145,13 @@ int main(int argc, char** argv) {
     char* pos;              // Positions in buffer
 
     int32_t* postings_buffer = new int32_t[docnos.size() * 2]; // Postings buffer for search queries
-    int32_t* rsv             = new int32_t[docnos.size()];     // RSV values
+    int32_t* rsv             = new int32_t[docnos.size()];     // RSV values for each document
 
     // Process search queries line by line
     while ((pos = fgets(buffer, sizeof(buffer), stdin)) != NULL)
     { 
         // Prepare for a new search
-        memset(rsv, 0, sizeof(*rsv * docnos.size()));
+        memset(rsv, 0, sizeof(*rsv) * docnos.size());
 
         // Process each term in the query
         while ((pos = get_next_term(term, pos, buffer)) != NULL)
@@ -166,10 +166,9 @@ int main(int argc, char** argv) {
                 int32_t hits = term_postings.size / sizeof(int32_t) / 2;
                 posting_t* postings = (posting_t *)(&postings_buffer[0]);
 
-                std::cout << "term:" << term << ',';
-                std::cout << "docid:" << postings->docid << ',';
-                std::cout << "docno:" << docnos[postings->docid] << ',';
-                std::cout << "tf:" << postings->tf << '\n';
+                // Accumulate RSV values for each posting
+                for (int32_t hit = 0; hit < hits; hit++, postings++)
+                    rsv[postings->docid] += postings->tf;
             }
         }
     }
