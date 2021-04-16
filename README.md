@@ -1,3 +1,3 @@
-# Search Engine
+# Minimal Search Engine
 
-A search engine written in C
+A minimal search engine written in C++
