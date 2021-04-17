@@ -6,7 +6,7 @@ A minimal search engine written in C++ for the TREC WSJ collection.
 
 ### Build
 
-The program can be built using `make`.
+The program can be built using `make`. Just `cd` into the `src` directory and run
 
 ```
 make
@@ -41,11 +41,11 @@ Tested on my laptop (AMD® Ryzen 7 4800u) running Fedora 33.
 - It takes approximately 15s to index the TREC WSJ collection containing 173252 documents.
 - It takes less than a second to search the 50 queries in `test.queries`
 
-I am interested in extending this project. Some ideas include:
+Some ideas for improving/extending this project:
 
-- Rework code using a more consistent c++ style
+- Refactor code using a more consistent C++ style
 - Speed up document parsing by ignoring line breaks
-- Use a different ranking function
-- Merge each index file into one binary
-- Index file integrity verification
-- Explore using a compiled index
+- Use a better ranking function
+- Merge the index files into one binary
+- Verify the index integrity
+- Investigate using a compiled index
