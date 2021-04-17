@@ -84,5 +84,7 @@ tags
 .history
 .ionide
 
-### Test XML files ###
+### Other files ###
 wsj.*
+*.bin
+*.sha256
