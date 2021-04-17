@@ -118,7 +118,7 @@ void load_doclens(std::vector<int32_t>& doclens)
 /**
  * Get the next search term in the buffer.
  *
- * A search term is defined as an alphnumeric token.
+ * A search term is defined as an alphanumeric token.
  *
  * Return the character following the end of the current token, else NULL on
  * buffer end.
