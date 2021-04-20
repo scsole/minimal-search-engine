@@ -17,7 +17,7 @@ make
 To index a TREC collection located at `<infile.xml>`, use
 
 ```
-./src/index <infile.xml>
+./index <infile.xml>
 ```
 
 This will create four files required by the search engine: `dictionary.bin`, `docnos.bin`, `lengths.bin` & `postings.bin`
