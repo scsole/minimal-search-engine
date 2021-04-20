@@ -123,7 +123,7 @@ void load_doclens(std::vector<int32_t>& doclens)
  * Return the character following the end of the current token, else NULL on
  * buffer end.
  */
-char* get_next_term(char* term, char* pos, char* buffer)
+char* get_next_term(char* term, char* pos, char* buffer, int size)
 {
     // Skip non alphanumeric characters
     while (!isalnum(*pos) && *pos != '\n' && *pos != '\0')
@@ -141,7 +141,7 @@ char* get_next_term(char* term, char* pos, char* buffer)
 
     // Return the search term in lowercase
     int i = 0;
-    while (i < end - pos && i < (int) sizeof(buffer) - 1)
+    while (i < end - pos && i < size - 2)
     {
         term[i] = pos[i];
         i++;
@@ -186,6 +186,7 @@ int main(int argc, char** argv)
     char buffer[1024];      // Buffer for search terms from stdin
     char term[1024];        // Current filtered search term from buffer
     char* pos;              // Positions in buffer
+    int buffer_size = sizeof(buffer) * sizeof(*buffer);
 
     int32_t* postings_buffer = new int32_t[(docnos.size() + 1) * 2]; // Postings buffer for search queries
     double* rsv              = new double[docnos.size()];           // RSV values for each document
@@ -201,7 +202,7 @@ int main(int argc, char** argv)
         memset(rsv, 0, sizeof(*rsv) * docnos.size());
 
         // Process each term in the query
-        while ((pos = get_next_term(term, pos, buffer)) != NULL)
+        while ((pos = get_next_term(term, pos, buffer, buffer_size)) != NULL)
         {
             posting_location term_postings;
             if ((term_postings = dictionary[std::string(term)]).size != 0)
