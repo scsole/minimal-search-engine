@@ -39,7 +39,7 @@ The output will be in the form `<docno> <rsv>` with one document on each line.
 Tested on my laptop (AMD® Ryzen 7 4800u) running Fedora 33.
 
 - It takes approximately 15s to index the TREC WSJ collection containing 173252 documents.
-- It takes less than a second to search the 50 queries in `test.queries`
+- It takes less than two seconds to search the 50 queries in `test.queries`
 
 Some ideas for improving/extending this project:
 
