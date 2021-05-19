@@ -204,7 +204,7 @@ int main(int argc, char** argv)
     // Verify arguments
     if (argc != 2)
     {
-        printf("Usage: %s <infile.xml>", argv[0]);
+        printf("Usage: %s <infile.xml>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
